@@ -34,12 +34,41 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: |
-            ${{ secrets.EC2_SSH_KEY }}
-
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # ✅ Install Docker if not installed
+            if ! command -v docker &> /dev/null
+            then
+                echo "Docker not found! Installing Docker..."
+                sudo apt update -y
+                sudo apt install -y docker.io
+                sudo systemctl start docker
+                sudo systemctl enable docker
+                sudo usermod -aG docker $USER
+            else
+                echo "Docker is already installed."
+            fi
+
+            # ✅ Install AWS CLI if not installed
+            if ! command -v aws &> /dev/null
+            then
+                echo "AWS CLI not found! Installing AWS CLI..."
+                sudo apt update -y
+                sudo apt install -y awscli
+            else
+                echo "AWS CLI is already installed."
+            fi
+
+            # ✅ Authenticate Docker with AWS ECR
+            aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URI }}
+
+            # ✅ Stop and Remove Existing Container (ignore errors if not present)
             sudo docker stop todo-backend || true
             sudo docker rm todo-backend || true
+
+            # ✅ Pull Latest Docker Image from AWS ECR
             sudo docker pull ${{ secrets.AWS_ECR_URI }}/todo-backend:latest
+
+            # ✅ Run New Container
             sudo docker run -d -p 5000:5000 --name todo-backend ${{ secrets.AWS_ECR_URI }}/todo-backend:latest
