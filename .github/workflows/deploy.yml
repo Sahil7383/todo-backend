@@ -43,4 +43,4 @@ jobs:
             sudo docker stop todo-backend || true
             sudo docker rm todo-backend || true
             sudo docker pull ${{ secrets.AWS_ECR_URI }}/todo-backend:latest
-            sudo docker run -d -p 5000:5000 --name todo-backend ${{ secrets.AWS_ECR_URI }}/todo-backend:latest
+            sudo docker run -d -p 5000:5000 \-e MONGO_URI="${{ secrets.MONGO_URI }}" \ --name todo-backend ${{ secrets.AWS_ECR_URI }}/todo-backend:latest
