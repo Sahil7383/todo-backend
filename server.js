@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:3000" })); // Allow frontend access
+app.use(cors()); // Allow frontend access
 
 // MongoDB Connection
 mongoose
